@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlowEase API — Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0a0604;--bg2:#1a0f0a;--bg3:#2d1a10;--border:#4a2f1f;--text:#f8f4f0;--muted:#c9b8a8;
+    --primary:#E8632A;--primary-dim:#5a1f0a;--secondary:#F5C5AC;--secondary-dim:#3a2618;
+    --green:#4caf50;--green-dim:#1a3a22;--blue:#58a6ff;--blue-dim:#0d2239;
+    --orange:#f0883e;--orange-dim:#2d1a0d;--red:#f85149;--red-dim:#2d1212;
+    --purple:#bc8cff;--purple-dim:#1c1030;--yellow:#e3b341;--cyan:#39d0d8;--sidebar-w:280px;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family:'Fira Code',monospace; background:var(--bg); color:var(--text); display:flex; min-height:100vh; font-size:13.5px; line-height:1.7; }
+  nav#sidebar { position:fixed; top:0; left:0; bottom:0; width:var(--sidebar-w); background:var(--bg2); border-right:1px solid var(--border); overflow-y:auto; z-index:100; display:flex; flex-direction:column; }
+  .sidebar-header { padding:28px 20px 20px; border-bottom:1px solid var(--border); }
+  .sidebar-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:17px; color:var(--text); letter-spacing:-0.3px; display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .logo-dot { width:8px; height:8px; background:var(--primary); border-radius:50%; display:inline-block; box-shadow:0 0 8px var(--primary); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .sidebar-version { font-size:11px; color:var(--muted); background:var(--bg3); border:1px solid var(--border); padding:2px 8px; border-radius:20px; display:inline-block; }
+  .sidebar-search { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .sidebar-search input { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'Fira Code',monospace; font-size:12px; padding:7px 12px; outline:none; transition:border-color .2s; }
+  .sidebar-search input:focus { border-color:var(--primary); }
+  .sidebar-search input::placeholder { color:var(--muted); }
+  .nav-section { padding:10px 0; }
+  .nav-label { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); padding:6px 20px 4px; }
+  .nav-link { display:flex; align-items:center; gap:10px; padding:7px 20px; font-size:12.5px; color:var(--muted); text-decoration:none; transition:color .15s,background .15s; cursor:pointer; border:none; background:none; width:100%; text-align:left; }
+  .nav-link:hover { color:var(--text); background:var(--bg3); }
+  .nav-link.active { color:var(--primary); background:var(--primary-dim); border-right:2px solid var(--primary); }
+  .method-badge { font-size:9.5px; font-weight:600; padding:1px 6px; border-radius:3px; font-family:'Syne',sans-serif; letter-spacing:0.3px; flex-shrink:0; }
+  .GET    { background:var(--green-dim); color:var(--green); }
+  .POST   { background:var(--blue-dim);  color:var(--blue); }
+  .PUT    { background:var(--orange-dim);color:var(--orange); }
+  .DELETE { background:var(--red-dim);   color:var(--red); }
+  main { margin-left:var(--sidebar-w); flex:1; max-width:900px; padding:60px 56px 120px; }
+  .hero { margin-bottom:72px; }
+  .hero-eyebrow { font-size:11px; color:var(--primary); text-transform:uppercase; letter-spacing:2px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+  .hero-eyebrow::before { content:''; display:inline-block; width:24px; height:1px; background:var(--primary); }
+  h1 { font-family:'Syne',sans-serif; font-size:52px; font-weight:800; line-height:1.05; letter-spacing:-1.5px; color:var(--text); margin-bottom:20px; }
+  h1 span { color:var(--primary); }
+  .hero-desc { font-size:15px; color:var(--muted); max-width:560px; line-height:1.8; margin-bottom:32px; }
+  .hero-meta { display:flex; gap:24px; flex-wrap:wrap; }
+  .hero-chip { background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .chip-dot { width:6px; height:6px; border-radius:50%; background:var(--primary); }
+  hr.divider { border:none; border-top:1px solid var(--border); margin:56px 0; }
+  .doc-section { margin-bottom:80px; scroll-margin-top:24px; }
+  .section-title { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; color:var(--text); margin-bottom:6px; letter-spacing:-0.5px; }
+  .section-subtitle { color:var(--muted); font-size:13px; margin-bottom:32px; }
+  .endpoint { background:var(--bg2); border:1px solid var(--border); border-radius:10px; margin-bottom:16px; overflow:hidden; transition:border-color .2s; }
+  .endpoint:hover { border-color:var(--primary); }
+  .endpoint-header { display:flex; align-items:center; gap:14px; padding:16px 20px; cursor:pointer; user-select:none; }
+  .endpoint-method { font-size:11px; font-weight:700; padding:3px 10px; border-radius:4px; font-family:'Syne',sans-serif; letter-spacing:0.5px; min-width:58px; text-align:center; flex-shrink:0; }
+  .endpoint-path { font-family:'Fira Code',monospace; font-size:13.5px; color:var(--text); flex:1; }
+  .endpoint-summary { font-size:12px; color:var(--muted); }
+  .endpoint-chevron { color:var(--muted); font-size:11px; transition:transform .2s; }
+  .endpoint.open .endpoint-chevron { transform:rotate(180deg); }
+  .endpoint-body { display:none; border-top:1px solid var(--border); padding:24px 20px; background:var(--bg); }
+  .endpoint.open .endpoint-body { display:block; }
+  .auth-required { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--yellow); background:#2a2200; border:1px solid #4a3a00; border-radius:4px; padding:2px 8px; margin-bottom:18px; }
+  .auth-required.public { color:var(--green); background:var(--green-dim); border-color:#1f5c28; }
+  .params-label { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:20px 0 10px; }
+  .params-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .params-table th { text-align:left; padding:8px 12px; background:var(--bg3); color:var(--muted); font-family:'Syne',sans-serif; font-weight:600; font-size:11px; letter-spacing:0.5px; border-bottom:1px solid var(--border); }
+  .params-table th:first-child { border-radius:6px 0 0 0; }
+  .params-table th:last-child  { border-radius:0 6px 0 0; }
+  .params-table td { padding:9px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .params-table tr:last-child td { border-bottom:none; }
+  .param-name { color:var(--purple); font-weight:500; }
+  .param-type { color:var(--cyan); font-size:11.5px; }
+  .param-req  { color:var(--red); font-size:11px; }
+  .param-opt  { color:var(--muted); font-size:11px; }
+  .param-desc { color:#c9d1d9; }
+  .enum-val { display:inline-block; background:var(--bg3); border:1px solid var(--border); border-radius:3px; padding:0 5px; font-size:11px; color:var(--orange); margin:1px 2px; }
+  .code-label { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:20px 0 8px; }
+  .code-wrap { position:relative; background:var(--bg3); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .code-top { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--border); background:#1a0f0acc; }
+  .code-lang { font-size:11px; color:var(--muted); font-family:'Syne',sans-serif; letter-spacing:0.5px; text-transform:uppercase; }
+  .copy-btn { background:var(--bg2); border:1px solid var(--border); border-radius:5px; color:var(--muted); font-family:'Syne',sans-serif; font-size:11px; padding:3px 10px; cursor:pointer; transition:color .15s,border-color .15s; }
+  .copy-btn:hover { color:var(--text); border-color:var(--primary); }
+  .copy-btn.copied { color:var(--primary); border-color:var(--primary); }
+  pre { padding:18px 20px; overflow-x:auto; font-family:'Fira Code',monospace; font-size:12.5px; line-height:1.75; color:#c9d1d9; }
+  .json-key  { color:#79c0ff; }
+  .json-str  { color:#a5d6ff; }
+  .json-num  { color:var(--orange); }
+  .json-bool { color:var(--purple); }
+  .json-null { color:var(--red); }
+  .json-punct{ color:var(--muted); }
+  .res-tabs { display:flex; margin:24px 0 0; border-bottom:1px solid var(--border); }
+  .res-tab { padding:8px 18px; font-size:12px; font-family:'Syne',sans-serif; font-weight:600; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; transition:color .15s,border-color .15s; background:none; border-top:none; border-left:none; border-right:none; }
+  .res-tab.active { color:var(--text); border-bottom-color:var(--primary); }
+  .res-tab:hover { color:var(--text); }
+  .res-panel { display:none; padding-top:16px; }
+  .res-panel.active { display:block; }
+  .status-badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px; font-family:'Syne',sans-serif; margin-bottom:10px; }
+  .s200 { background:var(--green-dim); color:var(--green); }
+  .s201 { background:#0d3020; color:#56d364; }
+  .s400 { background:var(--orange-dim); color:var(--orange); }
+  .s401 { background:var(--red-dim); color:var(--red); }
+  .s403 { background:var(--red-dim); color:var(--red); }
+  .s404 { background:var(--orange-dim); color:var(--orange); }
+  .info-box { background:var(--blue-dim); border:1px solid #1c4a7a; border-radius:8px; padding:16px 20px; font-size:13px; color:#a5d6ff; margin-bottom:24px; display:flex; gap:12px; }
+  .info-box.warn { background:var(--orange-dim); border-color:#5a3010; color:#f0a870; }
+  .info-icon { flex-shrink:0; font-size:16px; }
+  .overview-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:40px; }
+  @media (max-width:720px) { .overview-grid { grid-template-columns:repeat(2,1fr); } }
+  .stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:20px 18px; text-align:center; }
+  .stat-number { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; color:var(--primary); display:block; line-height:1; margin-bottom:4px; }
+  .stat-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  @media (max-width:900px) { nav#sidebar{display:none;} main{margin-left:0;padding:30px 20px 80px;} h1{font-size:34px;} }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo"><span class="logo-dot"></span>FlowEase API</div>
+    <span class="sidebar-version">v2.0.0</span>
+  </div>
+  <div class="sidebar-search">
+    <input type="text" placeholder="Search endpoints..." oninput="filterNav(this.value)" />
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <a class="nav-link active" onclick="navTo('overview',this)">🗂 Introduction</a>
+    <a class="nav-link" onclick="navTo('auth-info',this)">🔐 Authentication</a>
+    <a class="nav-link" onclick="navTo('errors',this)">⚠ Errors</a>
+    <a class="nav-link" onclick="navTo('rate-limits',this)">⏱️ Rate Limits</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Auth</div>
+    <a class="nav-link" onclick="navTo('ep-register',this)"><span class="method-badge POST">POST</span>/auth/register</a>
+    <a class="nav-link" onclick="navTo('ep-login',this)"><span class="method-badge POST">POST</span>/auth/login</a>
+    <a class="nav-link" onclick="navTo('ep-logout',this)"><span class="method-badge POST">POST</span>/auth/logout</a>
+    <a class="nav-link" onclick="navTo('ep-refresh',this)"><span class="method-badge POST">POST</span>/auth/refresh</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Users</div>
+    <a class="nav-link" onclick="navTo('ep-get-me',this)"><span class="method-badge GET">GET</span>/users/me</a>
+    <a class="nav-link" onclick="navTo('ep-update-me',this)"><span class="method-badge PUT">PUT</span>/users/me</a>
+    <a class="nav-link" onclick="navTo('ep-avatar',this)"><span class="method-badge POST">POST</span>/users/me/avatar</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Workspaces</div>
+    <a class="nav-link" onclick="navTo('ep-get-workspaces',this)"><span class="method-badge GET">GET</span>/workspaces</a>
+    <a class="nav-link" onclick="navTo('ep-create-workspace',this)"><span class="method-badge POST">POST</span>/workspaces</a>
+    <a class="nav-link" onclick="navTo('ep-workspace-stats',this)"><span class="method-badge GET">GET</span>/workspaces/:id/stats</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Projects</div>
+    <a class="nav-link" onclick="navTo('ep-get-projects',this)"><span class="method-badge GET">GET</span>/projects</a>
+    <a class="nav-link" onclick="navTo('ep-create-project',this)"><span class="method-badge POST">POST</span>/projects</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Tasks</div>
+    <a class="nav-link" onclick="navTo('ep-get-tasks',this)"><span class="method-badge GET">GET</span>/tasks</a>
+    <a class="nav-link" onclick="navTo('ep-create-task',this)"><span class="method-badge POST">POST</span>/tasks</a>
+    <a class="nav-link" onclick="navTo('ep-update-task',this)"><span class="method-badge PUT">PUT</span>/tasks/:id</a>
+    <a class="nav-link" onclick="navTo('ep-complete-task',this)"><span class="method-badge PUT">PUT</span>/tasks/:id/complete</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Time Tracking</div>
+    <a class="nav-link" onclick="navTo('ep-start-timer',this)"><span class="method-badge POST">POST</span>/time-entries/start</a>
+    <a class="nav-link" onclick="navTo('ep-stop-timer',this)"><span class="method-badge PUT">PUT</span>/time-entries/:id/stop</a>
+    <a class="nav-link" onclick="navTo('ep-weekly-summary',this)"><span class="method-badge GET">GET</span>/time-entries/summary/week</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Invitations</div>
+    <a class="nav-link" onclick="navTo('ep-send-invite',this)"><span class="method-badge POST">POST</span>/invitations</a>
+    <a class="nav-link" onclick="navTo('ep-accept-invite',this)"><span class="method-badge PUT">PUT</span>/invitations/:id/accept</a>
+  </div>
+</nav>
+
+<main>
+  <section class="hero" id="overview">
+    <div class="hero-eyebrow">REST API Reference</div>
+    <h1>FlowEase<br /><span>API Docs</span></h1>
+    <p class="hero-desc">Enterprise-grade task management API with multi-workspace support, time tracking, team collaboration, and automated workflows. Base URL: <code style="color:var(--cyan)">http://localhost:5000/api</code></p>
+    <div class="hero-meta">
+      <div class="hero-chip"><span class="chip-dot"></span>v2.0.0 · Production Ready</div>
+      <div class="hero-chip">Node.js · Express</div>
+      <div class="hero-chip">MongoDB · Mongoose</div>
+      <div class="hero-chip">137 Endpoints</div>
+    </div>
+  </section>
+
+  <div class="overview-grid">
+    <div class="stat-card"><span class="stat-number">137</span><span class="stat-label">Endpoints</span></div>
+    <div class="stat-card"><span class="stat-number">10</span><span class="stat-label">Resources</span></div>
+    <div class="stat-card"><span class="stat-number">JWT</span><span class="stat-label">Auth</span></div>
+    <div class="stat-card"><span class="stat-number">100</span><span class="stat-label">Req / 15 min</span></div>
+  </div>
+
+  <hr class="divider" />
+
+  <section class="doc-section" id="auth-info">
+    <div class="section-title">Authentication</div>
+    <div class="section-subtitle">Secure your requests with JWT Bearer tokens</div>
+    <div class="info-box"><span class="info-icon">ℹ</span><div>All protected endpoints require an <strong>Authorization</strong> header with a valid Bearer token obtained from <code>/auth/login</code> or <code>/auth/register</code>.</div></div>
+    <div class="code-wrap">
+      <div class="code-top"><span class="code-lang">HTTP Header</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><span style="color:var(--yellow)">Authorization</span><span class="json-punct">: </span><span style="color:var(--orange)">Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...</span></pre>
+    </div>
+    <div style="margin-top:16px" class="info-box warn"><span class="info-icon">⚠</span><div>Access tokens expire in <strong>7 days</strong>. Use <code>/auth/refresh</code> with your refresh token (valid 30 days) to get a new access token.</div></div>
+  </section>
+
+  <hr class="divider" />
+
+  <section class="doc-section" id="auth-endpoints">
+    <div class="section-title">Auth Endpoints</div>
+    <div class="section-subtitle">Registration, login, OAuth, and token management</div>
+
+    <!-- REGISTER -->
+    <div class="endpoint" id="ep-register">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/auth/register</span>
+        <span class="endpoint-summary">Register a new user account</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required public">🌐 Public</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">name</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Full name, 2-50 chars</td></tr>
+          <tr><td class="param-name">email</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Valid email address</td></tr>
+          <tr><td class="param-name">password</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Min 8 chars with uppercase, lowercase, number, special char</td></tr>
+          <tr><td class="param-name">invitationToken</td><td class="param-type">string</td><td class="param-opt">Optional</td><td class="param-desc">Token from workspace invitation</td></tr>
+        </table>
+        <div class="code-label">Request Example</div>
+        <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>{
+  <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Jane Smith"</span><span class="json-punct">,</span>
+  <span class="json-key">"email"</span><span class="json-punct">:</span> <span class="json-str">"jane@example.com"</span><span class="json-punct">,</span>
+  <span class="json-key">"password"</span><span class="json-punct">:</span> <span class="json-str">"SecurePass123!"</span>
+}</pre></div>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'reg-ok')">✓ 201 Success</button>
+          <button class="res-tab" onclick="tab(this,'reg-err')">✕ 400 Error</button>
+        </div>
+        <div class="res-panel active" id="reg-ok"><span class="status-badge s201">201 Created</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Registration successful"</span><span class="json-punct">,</span>
+  <span class="json-key">"accessToken"</span><span class="json-punct">:</span> <span class="json-str">"eyJhbGci..."</span><span class="json-punct">,</span>
+  <span class="json-key">"refreshToken"</span><span class="json-punct">:</span> <span class="json-str">"eyJhbGci..."</span>
+}</pre></div></div>
+        <div class="res-panel" id="reg-err"><span class="status-badge s400">400 Bad Request</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">false</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Validation failed"</span><span class="json-punct">,</span>
+  <span class="json-key">"errors"</span><span class="json-punct">: {</span>
+    <span class="json-key">"email"</span><span class="json-punct">:</span> <span class="json-str">"Email already exists"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="endpoint" id="ep-login">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/auth/login</span>
+        <span class="endpoint-summary">Authenticate and receive tokens</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required public">🌐 Public</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">email</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Registered email</td></tr>
+          <tr><td class="param-name">password</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Account password</td></tr>
+        </table>
+        <div class="code-label">Request Example</div>
+        <div class="code-wrap"><div class="code-top"><span class="code-lang">cURL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"jane@example.com","password":"SecurePass123!"}'</pre></div>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'login-ok')">✓ 200 Success</button>
+          <button class="res-tab" onclick="tab(this,'login-err')">✕ 401 Error</button>
+        </div>
+        <div class="res-panel active" id="login-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Login Successful"</span><span class="json-punct">,</span>
+  <span class="json-key">"accessToken"</span><span class="json-punct">:</span> <span class="json-str">"eyJhbGci..."</span><span class="json-punct">,</span>
+  <span class="json-key">"refreshToken"</span><span class="json-punct">:</span> <span class="json-str">"eyJhbGci..."</span>
+}</pre></div></div>
+        <div class="res-panel" id="login-err"><span class="status-badge s401">401 Unauthorized</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">false</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Invalid credentials"</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- LOGOUT -->
+    <div class="endpoint" id="ep-logout">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/auth/logout</span>
+        <span class="endpoint-summary">Logout current session</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'logout-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="logout-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Logged out successfully"</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- REFRESH -->
+    <div class="endpoint" id="ep-refresh">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/auth/refresh</span>
+        <span class="endpoint-summary">Get new access token</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required public">🌐 Public</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">refreshToken</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Valid refresh token (30-day lifetime)</td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'ref-ok')">✓ 200 Success</button>
+          <button class="res-tab" onclick="tab(this,'ref-err')">✕ 401 Error</button>
+        </div>
+        <div class="res-panel active" id="ref-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"accessToken"</span><span class="json-punct">:</span> <span class="json-str">"eyJhbGci..."</span>
+}</pre></div></div>
+        <div class="res-panel" id="ref-err"><span class="status-badge s401">401 Unauthorized</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">false</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Invalid refresh token"</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- USER ENDPOINTS -->
+  <section class="doc-section" id="user-endpoints">
+    <div class="section-title">User Endpoints</div>
+    <div class="section-subtitle">Profile management and preferences</div>
+
+    <!-- GET ME -->
+    <div class="endpoint" id="ep-get-me">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method GET">GET</span>
+        <span class="endpoint-path">/users/me</span>
+        <span class="endpoint-summary">Get current user profile</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'getme-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="getme-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439011"</span><span class="json-punct">,</span>
+    <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Jane Smith"</span><span class="json-punct">,</span>
+    <span class="json-key">"email"</span><span class="json-punct">:</span> <span class="json-str">"jane@example.com"</span><span class="json-punct">,</span>
+    <span class="json-key">"profile"</span><span class="json-punct">: {</span>
+      <span class="json-key">"image"</span><span class="json-punct">:</span> <span class="json-str">"https://cloudinary.com/avatar.jpg"</span><span class="json-punct">,</span>
+      <span class="json-key">"bio"</span><span class="json-punct">:</span> <span class="json-str">"Product Manager"</span>
+    <span class="json-punct">},</span>
+    <span class="json-key">"workspaces"</span><span class="json-punct">: []</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- UPDATE ME -->
+    <div class="endpoint" id="ep-update-me">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method PUT">PUT</span>
+        <span class="endpoint-path">/users/me</span>
+        <span class="endpoint-summary">Update current user profile</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Body Parameters (All Optional)</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="param-name">name</td><td class="param-type">string</td><td class="param-desc">Updated name</td></tr>
+          <tr><td class="param-name">email</td><td class="param-type">string</td><td class="param-desc">Updated email</td></tr>
+          <tr><td class="param-name">profile.bio</td><td class="param-type">string</td><td class="param-desc">User bio</td></tr>
+          <tr><td class="param-name">profile.phone</td><td class="param-type">string</td><td class="param-desc">Phone number</td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'updateme-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="updateme-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Profile updated successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span> <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Jane Updated"</span> <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- UPLOAD AVATAR -->
+    <div class="endpoint" id="ep-avatar">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/users/me/avatar</span>
+        <span class="endpoint-summary">Upload profile avatar</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Form Data</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">avatar</td><td class="param-type">file</td><td class="param-req">Required</td><td class="param-desc">Image file (jpg, png, webp) max 5MB</td></tr>
+        </table>
+        <div class="code-label">Request Example</div>
+        <div class="code-wrap"><div class="code-top"><span class="code-lang">cURL</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>curl -X POST http://localhost:5000/api/users/me/avatar \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -F "avatar=@/path/to/image.jpg"</pre></div>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'avatar-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="avatar-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Avatar uploaded successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"imageUrl"</span><span class="json-punct">:</span> <span class="json-str">"https://cloudinary.com/uploads/avatar.jpg"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- WORKSPACE ENDPOINTS -->
+  <section class="doc-section" id="workspace-endpoints">
+    <div class="section-title">Workspace Endpoints</div>
+    <div class="section-subtitle">Multi-workspace organization and team management</div>
+
+    <!-- GET WORKSPACES -->
+    <div class="endpoint" id="ep-get-workspaces">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method GET">GET</span>
+        <span class="endpoint-path">/workspaces</span>
+        <span class="endpoint-summary">List all user workspaces</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'getws-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="getws-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"count"</span><span class="json-punct">:</span> <span class="json-num">3</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: [{</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439030"</span><span class="json-punct">,</span>
+    <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Acme Corp"</span><span class="json-punct">,</span>
+    <span class="json-key">"slug"</span><span class="json-punct">:</span> <span class="json-str">"acme-corp"</span><span class="json-punct">,</span>
+    <span class="json-key">"role"</span><span class="json-punct">:</span> <span class="json-str">"owner"</span>
+  <span class="json-punct">}]</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- CREATE WORKSPACE -->
+    <div class="endpoint" id="ep-create-workspace">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/workspaces</span>
+        <span class="endpoint-summary">Create a new workspace</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">name</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Workspace name (2-100 chars)</td></tr>
+          <tr><td class="param-name">description</td><td class="param-type">string</td><td class="param-opt">Optional</td><td class="param-desc">Workspace description</td></tr>
+        </table>
+        <div class="code-label">Request Example</div>
+        <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>{
+  <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Acme Corp"</span><span class="json-punct">,</span>
+  <span class="json-key">"description"</span><span class="json-punct">:</span> <span class="json-str">"Main workspace for all projects"</span>
+}</pre></div>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'createws-ok')">✓ 201 Success</button>
+        </div>
+        <div class="res-panel active" id="createws-ok"><span class="status-badge s201">201 Created</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Workspace created successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439030"</span><span class="json-punct">,</span>
+    <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Acme Corp"</span><span class="json-punct">,</span>
+    <span class="json-key">"slug"</span><span class="json-punct">:</span> <span class="json-str">"acme-corp"</span><span class="json-punct">,</span>
+    <span class="json-key">"owner"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439011"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- WORKSPACE STATS -->
+    <div class="endpoint" id="ep-workspace-stats">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method GET">GET</span>
+        <span class="endpoint-path">/workspaces/:id/stats</span>
+        <span class="endpoint-summary">Get workspace statistics</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'wsstats-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="wsstats-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"members"</span><span class="json-punct">: {</span> <span class="json-key">"count"</span><span class="json-punct">:</span> <span class="json-num">15</span><span class="json-punct">,</span> <span class="json-key">"active"</span><span class="json-punct">:</span> <span class="json-num">12</span> <span class="json-punct">},</span>
+    <span class="json-key">"projects"</span><span class="json-punct">: {</span> <span class="json-key">"count"</span><span class="json-punct">:</span> <span class="json-num">8</span> <span class="json-punct">},</span>
+    <span class="json-key">"stats"</span><span class="json-punct">: {</span>
+      <span class="json-key">"totalTasks"</span><span class="json-punct">:</span> <span class="json-num">156</span><span class="json-punct">,</span>
+      <span class="json-key">"completedTasks"</span><span class="json-punct">:</span> <span class="json-num">89</span>
+    <span class="json-punct">}</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- PROJECT ENDPOINTS -->
+  <section class="doc-section" id="project-endpoints">
+    <div class="section-title">Project Endpoints</div>
+    <div class="section-subtitle">Project management and team collaboration</div>
+
+    <!-- GET PROJECTS -->
+    <div class="endpoint" id="ep-get-projects">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method GET">GET</span>
+        <span class="endpoint-path">/projects</span>
+        <span class="endpoint-summary">List all projects</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Query Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="param-name">workspace</td><td class="param-type">ObjectId</td><td class="param-desc">Filter by workspace ID</td></tr>
+          <tr><td class="param-name">status</td><td class="param-type">string</td><td class="param-desc"><span class="enum-val">planning</span><span class="enum-val">active</span><span class="enum-val">on-hold</span><span class="enum-val">completed</span></td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'getprojects-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="getprojects-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"count"</span><span class="json-punct">:</span> <span class="json-num">5</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: [{</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439013"</span><span class="json-punct">,</span>
+    <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Website Redesign"</span><span class="json-punct">,</span>
+    <span class="json-key">"status"</span><span class="json-punct">:</span> <span class="json-str">"active"</span>
+  <span class="json-punct">}]</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- CREATE PROJECT -->
+    <div class="endpoint" id="ep-create-project">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/projects</span>
+        <span class="endpoint-summary">Create a new project</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">name</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Project name (2-100 chars)</td></tr>
+          <tr><td class="param-name">workspace</td><td class="param-type">ObjectId</td><td class="param-req">Required</td><td class="param-desc">Workspace ID</td></tr>
+          <tr><td class="param-name">description</td><td class="param-type">string</td><td class="param-opt">Optional</td><td class="param-desc">Project description</td></tr>
+          <tr><td class="param-name">startDate</td><td class="param-type">Date</td><td class="param-opt">Optional</td><td class="param-desc">Start date (ISO 8601)</td></tr>
+          <tr><td class="param-name">endDate</td><td class="param-type">Date</td><td class="param-opt">Optional</td><td class="param-desc">End date (ISO 8601)</td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'createproject-ok')">✓ 201 Success</button>
+        </div>
+        <div class="res-panel active" id="createproject-ok"><span class="status-badge s201">201 Created</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Project created successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439013"</span><span class="json-punct">,</span>
+    <span class="json-key">"name"</span><span class="json-punct">:</span> <span class="json-str">"Website Redesign"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- TASK ENDPOINTS -->
+  <section class="doc-section" id="task-endpoints">
+    <div class="section-title">Task Endpoints</div>
+    <div class="section-subtitle">Advanced task management with assignments and dependencies</div>
+
+    <!-- GET TASKS -->
+    <div class="endpoint" id="ep-get-tasks">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method GET">GET</span>
+        <span class="endpoint-path">/tasks</span>
+        <span class="endpoint-summary">List all accessible tasks</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Query Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="param-name">workspace</td><td class="param-type">ObjectId</td><td class="param-desc">Filter by workspace</td></tr>
+          <tr><td class="param-name">project</td><td class="param-type">ObjectId</td><td class="param-desc">Filter by project</td></tr>
+          <tr><td class="param-name">status</td><td class="param-type">string</td><td class="param-desc"><span class="enum-val">todo</span><span class="enum-val">in-progress</span><span class="enum-val">review</span><span class="enum-val">completed</span></td></tr>
+          <tr><td class="param-name">priority</td><td class="param-type">string</td><td class="param-desc"><span class="enum-val">low</span><span class="enum-val">medium</span><span class="enum-val">high</span><span class="enum-val">urgent</span></td></tr>
+          <tr><td class="param-name">assignedTo</td><td class="param-type">ObjectId</td><td class="param-desc">Filter by assigned user</td></tr>
+          <tr><td class="param-name">page</td><td class="param-type">number</td><td class="param-desc">Page number (default: 1)</td></tr>
+          <tr><td class="param-name">limit</td><td class="param-type">number</td><td class="param-desc">Items per page (default: 50, max: 100)</td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'gettasks-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="gettasks-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"count"</span><span class="json-punct">:</span> <span class="json-num">25</span><span class="json-punct">,</span>
+  <span class="json-key">"total"</span><span class="json-punct">:</span> <span class="json-num">156</span><span class="json-punct">,</span>
+  <span class="json-key">"page"</span><span class="json-punct">:</span> <span class="json-num">1</span><span class="json-punct">,</span>
+  <span class="json-key">"pages"</span><span class="json-punct">:</span> <span class="json-num">7</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: [{</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439020"</span><span class="json-punct">,</span>
+    <span class="json-key">"title"</span><span class="json-punct">:</span> <span class="json-str">"Implement authentication"</span><span class="json-punct">,</span>
+    <span class="json-key">"status"</span><span class="json-punct">:</span> <span class="json-str">"in-progress"</span><span class="json-punct">,</span>
+    <span class="json-key">"priority"</span><span class="json-punct">:</span> <span class="json-str">"high"</span><span class="json-punct">,</span>
+    <span class="json-key">"progress"</span><span class="json-punct">:</span> <span class="json-num">60</span>
+  <span class="json-punct">}]</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- CREATE TASK -->
+    <div class="endpoint" id="ep-create-task">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/tasks</span>
+        <span class="endpoint-summary">Create a new task</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">title</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Task title (3-200 chars)</td></tr>
+          <tr><td class="param-name">project</td><td class="param-type">ObjectId</td><td class="param-req">Required</td><td class="param-desc">Project ID</td></tr>
+          <tr><td class="param-name">description</td><td class="param-type">string</td><td class="param-opt">Optional</td><td class="param-desc">Task description (max 2000 chars)</td></tr>
+          <tr><td class="param-name">priority</td><td class="param-type">string</td><td class="param-opt">Optional</td><td class="param-desc">Default: medium</td></tr>
+          <tr><td class="param-name">dueDate</td><td class="param-type">Date</td><td class="param-opt">Optional</td><td class="param-desc">Due date (ISO 8601)</td></tr>
+          <tr><td class="param-name">tags</td><td class="param-type">array</td><td class="param-opt">Optional</td><td class="param-desc">Array of tags</td></tr>
+        </table>
+        <div class="code-label">Request Example</div>
+        <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+        <pre>{
+  <span class="json-key">"title"</span><span class="json-punct">:</span> <span class="json-str">"Implement JWT authentication"</span><span class="json-punct">,</span>
+  <span class="json-key">"project"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439013"</span><span class="json-punct">,</span>
+  <span class="json-key">"priority"</span><span class="json-punct">:</span> <span class="json-str">"high"</span><span class="json-punct">,</span>
+  <span class="json-key">"tags"</span><span class="json-punct">: [</span><span class="json-str">"backend"</span><span class="json-punct">,</span> <span class="json-str">"security"</span><span class="json-punct">]</span>
+}</pre></div>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'createtask-ok')">✓ 201 Success</button>
+        </div>
+        <div class="res-panel active" id="createtask-ok"><span class="status-badge s201">201 Created</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Task created successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439020"</span><span class="json-punct">,</span>
+    <span class="json-key">"title"</span><span class="json-punct">:</span> <span class="json-str">"Implement JWT authentication"</span><span class="json-punct">,</span>
+    <span class="json-key">"status"</span><span class="json-punct">:</span> <span class="json-str">"todo"</span><span class="json-punct">,</span>
+    <span class="json-key">"priority"</span><span class="json-punct">:</span> <span class="json-str">"high"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- UPDATE TASK -->
+    <div class="endpoint" id="ep-update-task">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method PUT">PUT</span>
+        <span class="endpoint-path">/tasks/:id</span>
+        <span class="endpoint-summary">Update an existing task</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="info-box"><span class="info-icon">ℹ</span><div>Only send the fields you want to update. All fields are optional.</div></div>
+        <div class="params-label">Body Parameters (All Optional)</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Description</th></tr>
+          <tr><td class="param-name">title</td><td class="param-type">string</td><td class="param-desc">Updated title</td></tr>
+          <tr><td class="param-name">status</td><td class="param-type">string</td><td class="param-desc">Updated status</td></tr>
+          <tr><td class="param-name">priority</td><td class="param-type">string</td><td class="param-desc">Updated priority</td></tr>
+          <tr><td class="param-name">progress</td><td class="param-type">number</td><td class="param-desc">Progress percentage (0-100)</td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'updatetask-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="updatetask-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Task updated successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"status"</span><span class="json-punct">:</span> <span class="json-str">"in-progress"</span><span class="json-punct">,</span>
+    <span class="json-key">"progress"</span><span class="json-punct">:</span> <span class="json-num">75</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- COMPLETE TASK -->
+    <div class="endpoint" id="ep-complete-task">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method PUT">PUT</span>
+        <span class="endpoint-path">/tasks/:id/complete</span>
+        <span class="endpoint-summary">Mark task as completed</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'completetask-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="completetask-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Task completed successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"status"</span><span class="json-punct">:</span> <span class="json-str">"completed"</span><span class="json-punct">,</span>
+    <span class="json-key">"progress"</span><span class="json-punct">:</span> <span class="json-num">100</span><span class="json-punct">,</span>
+    <span class="json-key">"completedAt"</span><span class="json-punct">:</span> <span class="json-str">"2025-02-25T10:30:00.000Z"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- TIME TRACKING ENDPOINTS -->
+  <section class="doc-section" id="time-tracking-endpoints">
+    <div class="section-title">Time Tracking Endpoints</div>
+    <div class="section-subtitle">Advanced time tracking with approval workflows</div>
+
+    <!-- START TIMER -->
+    <div class="endpoint" id="ep-start-timer">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/time-entries/start</span>
+        <span class="endpoint-summary">Start a new timer</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">workspace</td><td class="param-type">ObjectId</td><td class="param-req">Required</td><td class="param-desc">Workspace ID</td></tr>
+          <tr><td class="param-name">task</td><td class="param-type">ObjectId</td><td class="param-opt">Optional</td><td class="param-desc">Task ID</td></tr>
+          <tr><td class="param-name">description</td><td class="param-type">string</td><td class="param-opt">Optional</td><td class="param-desc">Work description</td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'starttimer-ok')">✓ 201 Success</button>
+        </div>
+        <div class="res-panel active" id="starttimer-ok"><span class="status-badge s201">201 Created</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Timer started successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439040"</span><span class="json-punct">,</span>
+    <span class="json-key">"clockIn"</span><span class="json-punct">:</span> <span class="json-str">"2025-02-25T14:00:00.000Z"</span><span class="json-punct">,</span>
+    <span class="json-key">"isRunning"</span><span class="json-punct">:</span> <span class="json-bool">true</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- STOP TIMER -->
+    <div class="endpoint" id="ep-stop-timer">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method PUT">PUT</span>
+        <span class="endpoint-path">/time-entries/:id/stop</span>
+        <span class="endpoint-summary">Stop a running timer</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'stoptimer-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="stoptimer-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Timer stopped successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"clockOut"</span><span class="json-punct">:</span> <span class="json-str">"2025-02-25T16:30:00.000Z"</span><span class="json-punct">,</span>
+    <span class="json-key">"duration"</span><span class="json-punct">:</span> <span class="json-num">150</span><span class="json-punct">,</span>
+    <span class="json-key">"isRunning"</span><span class="json-punct">:</span> <span class="json-bool">false</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- WEEKLY SUMMARY -->
+    <div class="endpoint" id="ep-weekly-summary">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method GET">GET</span>
+        <span class="endpoint-path">/time-entries/summary/week</span>
+        <span class="endpoint-summary">Get weekly time summary</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'weeklysummary-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="weeklysummary-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"totalHours"</span><span class="json-punct">:</span> <span class="json-num">38.5</span><span class="json-punct">,</span>
+    <span class="json-key">"billableHours"</span><span class="json-punct">:</span> <span class="json-num">32.0</span><span class="json-punct">,</span>
+    <span class="json-key">"byProject"</span><span class="json-punct">: [{</span>
+      <span class="json-key">"project"</span><span class="json-punct">:</span> <span class="json-str">"Website Redesign"</span><span class="json-punct">,</span>
+      <span class="json-key">"hours"</span><span class="json-punct">:</span> <span class="json-num">20.5</span>
+    <span class="json-punct">}]</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- INVITATION ENDPOINTS -->
+  <section class="doc-section" id="invitation-endpoints">
+    <div class="section-title">Invitation Endpoints</div>
+    <div class="section-subtitle">Workspace member invitations</div>
+
+    <!-- SEND INVITE -->
+    <div class="endpoint" id="ep-send-invite">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method POST">POST</span>
+        <span class="endpoint-path">/invitations</span>
+        <span class="endpoint-summary">Send workspace invitation</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required (Admin/Owner)</span>
+        <div class="params-label">Body Parameters</div>
+        <table class="params-table">
+          <tr><th>Name</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr><td class="param-name">email</td><td class="param-type">string</td><td class="param-req">Required</td><td class="param-desc">Invitee email</td></tr>
+          <tr><td class="param-name">workspace</td><td class="param-type">ObjectId</td><td class="param-req">Required</td><td class="param-desc">Workspace ID</td></tr>
+          <tr><td class="param-name">role</td><td class="param-type">string</td><td class="param-opt">Optional</td><td class="param-desc"><span class="enum-val">member</span><span class="enum-val">admin</span> (default: member)</td></tr>
+        </table>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'sendinvite-ok')">✓ 201 Success</button>
+        </div>
+        <div class="res-panel active" id="sendinvite-ok"><span class="status-badge s201">201 Created</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Invitation sent successfully"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"_id"</span><span class="json-punct">:</span> <span class="json-str">"507f1f77bcf86cd799439050"</span><span class="json-punct">,</span>
+    <span class="json-key">"email"</span><span class="json-punct">:</span> <span class="json-str">"john@example.com"</span><span class="json-punct">,</span>
+    <span class="json-key">"status"</span><span class="json-punct">:</span> <span class="json-str">"pending"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+    <!-- ACCEPT INVITE -->
+    <div class="endpoint" id="ep-accept-invite">
+      <div class="endpoint-header" onclick="toggle(this)">
+        <span class="endpoint-method PUT">PUT</span>
+        <span class="endpoint-path">/invitations/:id/accept</span>
+        <span class="endpoint-summary">Accept workspace invitation</span>
+        <span class="endpoint-chevron">▾</span>
+      </div>
+      <div class="endpoint-body">
+        <span class="auth-required">🔒 Bearer Token Required</span>
+        <div class="res-tabs">
+          <button class="res-tab active" onclick="tab(this,'acceptinvite-ok')">✓ 200 Success</button>
+        </div>
+        <div class="res-panel active" id="acceptinvite-ok"><span class="status-badge s200">200 OK</span>
+          <div class="code-wrap"><div class="code-top"><span class="code-lang">JSON</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">true</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Successfully joined Acme Corp"</span><span class="json-punct">,</span>
+  <span class="json-key">"data"</span><span class="json-punct">: {</span>
+    <span class="json-key">"workspace"</span><span class="json-punct">:</span> <span class="json-str">"Acme Corp"</span><span class="json-punct">,</span>
+    <span class="json-key">"role"</span><span class="json-punct">:</span> <span class="json-str">"member"</span>
+  <span class="json-punct">}</span>
+}</pre></div></div>
+      </div>
+    </div>
+
+  </section>
+
+  <hr class="divider" />
+
+  <!-- RATE LIMITS -->
+  <section class="doc-section" id="rate-limits">
+    <div class="section-title">Rate Limits</div>
+    <div class="section-subtitle">API request throttling to ensure fair usage</div>
+    <table class="params-table">
+      <tr><th>Endpoint Type</th><th>Limit</th><th>Window</th></tr>
+      <tr><td>General API</td><td>100 requests</td><td>15 minutes</td></tr>
+      <tr><td>Authentication</td><td>5 requests</td><td>15 minutes</td></tr>
+      <tr><td>Password Reset</td><td>3 requests</td><td>1 hour</td></tr>
+      <tr><td>File Upload</td><td>20 requests</td><td>1 hour</td></tr>
+    </table>
+    <div style="margin-top:16px" class="info-box warn"><span class="info-icon">⚠</span><div>When you exceed the rate limit, you'll receive a <strong>429 Too Many Requests</strong> response with a <code>retryAfter</code> value in seconds.</div></div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ERRORS -->
+  <section class="doc-section" id="errors">
+    <div class="section-title">Error Codes</div>
+    <div class="section-subtitle">Standard HTTP status codes used across all endpoints</div>
+    <div class="code-wrap">
+      <div style="padding:16px 20px;">
+        <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--green)">200</div>
+          <div><strong>OK</strong> — Request succeeded</div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--green)">201</div>
+          <div><strong>Created</strong> — Resource created successfully</div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--orange)">400</div>
+          <div><strong>Bad Request</strong> — Validation failed or missing fields</div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--red)">401</div>
+          <div><strong>Unauthorized</strong> — Missing or invalid token</div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--red)">403</div>
+          <div><strong>Forbidden</strong> — Insufficient permissions</div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--orange)">404</div>
+          <div><strong>Not Found</strong> — Resource not found</div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--purple)">429</div>
+          <div><strong>Too Many Requests</strong> — Rate limit exceeded</div>
+        </div>
+        <div style="display:flex;gap:16px;padding:10px 0;font-size:12.5px;">
+          <div style="min-width:44px;font-family:'Syne',sans-serif;font-weight:700;color:var(--red)">500</div>
+          <div><strong>Server Error</strong> — Internal server error</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px" class="code-wrap"><div class="code-top"><span class="code-lang">Error Response Format</span></div>
+    <pre>{
+  <span class="json-key">"success"</span><span class="json-punct">:</span> <span class="json-bool">false</span><span class="json-punct">,</span>
+  <span class="json-key">"message"</span><span class="json-punct">:</span> <span class="json-str">"Error description"</span><span class="json-punct">,</span>
+  <span class="json-key">"errorCode"</span><span class="json-punct">:</span> <span class="json-str">"ERROR_TYPE"</span><span class="json-punct">,</span>
+  <span class="json-key">"errors"</span><span class="json-punct">: {</span>
+    <span class="json-key">"field"</span><span class="json-punct">:</span> <span class="json-str">"Validation message"</span>
+  <span class="json-punct">}</span>
+}</pre></div>
+  </section>
+
+</main>
+
+<script>
+  function toggle(header) {
+    const ep = header.parentElement;
+    ep.classList.toggle('open');
+  }
+
+  function navTo(id, el) {
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    el.classList.add('active');
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (target.classList.contains('endpoint') && !target.classList.contains('open')) {
+      target.classList.add('open');
+    }
+  }
+
+  function tab(btn, panelId) {
+    const body = btn.closest('.endpoint-body');
+    body.querySelectorAll('.res-tab').forEach(t => t.classList.remove('active'));
+    body.querySelectorAll('.res-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(panelId).classList.add('active');
+  }
+
+  function copyCode(btn) {
+    const text = btn.closest('.code-wrap').querySelector('pre').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function filterNav(val) {
+    const v = val.toLowerCase();
+    document.querySelectorAll('.nav-link').forEach(l => {
+      l.style.display = (!v || l.innerText.toLowerCase().includes(v)) ? '' : 'none';
+    });
+  }
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const id = e.target.id;
+      document.querySelectorAll('.nav-link').forEach(l => {
+        l.classList.toggle('active', l.getAttribute('onclick')?.includes(`'${id}'`) ?? false);
+      });
+    });
+  }, { rootMargin: '-15% 0px -75% 0px' });
+
+  document.querySelectorAll('[id]').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
