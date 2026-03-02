@@ -600,6 +600,19 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 
   await user.save({ validateBeforeSave: false });
 
+  // ✅ Send welcome email for NEW users
+  if (isNewUser) {
+    try {
+      await sendWelcomeEmail({
+        email: user.email,
+        name: user.name,
+      });
+      console.log(`✅ Welcome email sent to new user: ${user.email}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send welcome email:`, emailError.message);
+    }
+  }
+
   return res.status(200).json({
     success: true,
     message: user.emailVerified
@@ -837,18 +850,6 @@ export const linkedinCallback = asyncHandler(async (req, res) => {
     await user.addWorkspace(workspace._id, "owner", true);
   }
 
-  // ✅ Send welcome email for NEW OAuth users
-  if (isNewUser) {
-    try {
-      await sendWelcomeEmail({
-        email: user.email,
-        name: user.name,
-      });
-      console.log(`✅ Welcome email sent to new OAuth user: ${user.email}`);
-    } catch (emailError) {
-      console.error(`❌ Failed to send welcome email:`, emailError.message);
-    }
-  }
 
   await user.trackLogin(req.ip, req.headers["user-agent"]);
 
