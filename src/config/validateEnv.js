@@ -214,6 +214,18 @@ export const maskSensitive = (key, value) => {
     'API_SECRET',
     'CLIENT_SECRET',
     'MONGO_URI',
+    'CLOUDINARY_CLOUD_NAME',
+    'CLOUDINARY_API_KEY',
+    'CLOUDINARY_API_SECRET',
+    'RESEND_API_KEY',
+    'LINKEDIN_CLIENT_SECRET',
+    'LINKEDIN_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'SESSION_SECRET',
+    'JWT_REFRESH_SECRET',
+    'JWT_SECRET'
+
   ];
 
   const isSensitive = sensitiveKeys.some((sensitive) =>

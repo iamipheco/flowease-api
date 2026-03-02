@@ -11,6 +11,7 @@ import {
   sendPasswordResetEmail,
   sendVerificationEmail,
   sendPasswordResetSuccessEmail,
+  sendWelcomeEmail,
 } from "../services/emailService.js";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
@@ -71,146 +72,105 @@ const sendTokenResponse = async (
 };
 
 /* =============================
-   @desc    Register user
+   @desc    Register user (email verification first)
    @route   POST /api/auth/register
    @access  Public
 ============================= */
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, password, invitationToken } = req.body;
+  const { name, email, password, invitationToken, providerId } = req.body;
 
-  // Check if user exists (including soft-deleted)
-  let user = await User.findOne({ email }).where("isDeleted").in([true, false]);
+  // 1️⃣ Check if user exists (including soft-deleted)
+  let existingUser = await User.findOne({ email })
+    .where("isDeleted")
+    .in([true, false]);
 
-  // Restore soft-deleted account
-  if (user?.isDeleted) {
-    user.isDeleted = false;
-    user.deletedAt = null;
-    user.isActive = true;
-    await user.save({ validateBeforeSave: false });
-
-    return res.status(200).json({
-      success: true,
-      message: "Account restored. You can now login.",
-    });
-  }
-
-  // Link local provider to existing OAuth account
-  if (user) {
-    const hasLocalAuth = user.authProviders.some((p) => p.provider === "local");
-
-    if (!hasLocalAuth) {
-      user.password = password;
-      user.authProviders.push({
-        provider: "local",
-        providerId: null,
-        connectedAt: new Date(),
-      });
-      await user.save();
+  if (existingUser) {
+    // Restore soft-deleted account
+    if (existingUser.isDeleted) {
+      existingUser.isDeleted = false;
+      existingUser.deletedAt = null;
+      existingUser.isActive = true;
+      await existingUser.save({ validateBeforeSave: false });
 
       return res.status(200).json({
         success: true,
-        message:
-          "Account linked successfully. You can now login using email and password.",
+        message: "Account restored. You can now login.",
       });
     }
 
-    throw new ErrorResponse(
-      "Account already exists. Please login instead.",
-      400,
+    // Link local auth if missing
+    const hasLocalAuth = existingUser.authProviders?.some(
+      (p) => p.provider === "local",
     );
+    if (!hasLocalAuth && password) {
+      existingUser.password = password; // ✅ Model will hash automatically
+      existingUser.authProviders.push({
+        provider: "local",
+        providerId: providerId || null,
+        connectedAt: new Date(),
+      });
+      await existingUser.save();
+      return res.status(200).json({
+        success: true,
+        message: "Account linked successfully. You can now login.",
+      });
+    }
+
+    // Account exists with local auth
+    return res.status(400).json({
+      success: false,
+      message: "Account already exists. Please login.",
+    });
   }
 
-  // ✅ Create user instance in memory (NOT saved yet)
-  user = new User({
+  // 2️⃣ Create new user in memory (NOT saved yet)
+  const user = new User({
     name,
     email,
-    password,
+    password, // ✅ Will be hashed on save
     emailVerified: false,
     authProviders: [
       {
         provider: "local",
-        providerId: null,
+        providerId: providerId || null,
         connectedAt: new Date(),
       },
     ],
+    pendingInvitation: invitationToken || null,
   });
 
-  let workspaceId = null;
-  let role = "owner";
-
-  // Handle invitation
-  if (invitationToken) {
-    const invitation = await Invitation.findByToken(invitationToken);
-
-    if (!invitation) {
-      throw new ErrorResponse("Invalid or expired invitation", 400);
-    }
-
-    workspaceId = invitation.workspace;
-    role = invitation.role || "member";
-
-    const workspace = await Workspace.findById(workspaceId);
-    if (!workspace) {
-      throw new ErrorResponse("Workspace not found", 404);
-    }
-
-    await workspace.addMember(user._id, role, invitation.invitedBy);
-    await user.addWorkspace(workspaceId, role, false);
-    await invitation.accept(user._id);
-  }
-
-  // Create personal workspace if no invitation
-  if (!workspaceId) {
-    const workspace = await Workspace.create({
-      name: `${user.name}'s Workspace`,
-      owner: user._id,
-      members: [
-        {
-          user: user._id,
-          role: "owner",
-          joinedAt: new Date(),
-        },
-      ],
-    });
-
-    workspaceId = workspace._id;
-    await user.addWorkspace(workspaceId, "owner", true);
-  }
+  // 3️⃣ Generate email verification token
+  const verificationToken = user.getEmailVerificationToken();
+  const verificationUrl = `${process.env.FRONTEND_URL}/auth/verify-email/${verificationToken}`;
 
   try {
-    // Generate verification token in memory
-    const verificationToken = user.getEmailVerificationToken();
-
-    // Construct verification URL
-    const verificationUrl = `${process.env.FRONTEND_URL}/auth/verify-email/${verificationToken}`;
-
-    // Send verification email first
+    // 4️⃣ Send verification email FIRST
     await sendVerificationEmail({
       email: user.email,
       name: user.name,
       verificationUrl,
     });
 
-    // Only save user to DB if email was sent successfully
+    // 5️⃣ Save user only after email sent
     await user.save({ validateBeforeSave: false });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Registration successful! Please verify your email.",
-      data: {
+      requiresVerification: true,
+      user: {
         id: user._id,
         name: user.name,
         email: user.email,
-        workspace: workspaceId,
-        role,
-        requiresVerification: true,
+        pendingInvitation: user.pendingInvitation,
+        authProviders: user.authProviders,
       },
     });
   } catch (error) {
-    console.error("❌ Registration failed:", error);
-    res.status(500).json({
+    console.error("Email failed, user not saved:", error.message);
+    return res.status(500).json({
       success: false,
-      message: error.message || "Registration failed. Please try again later.",
+      message: "Could not send verification email. Try again.",
     });
   }
 });
@@ -359,41 +319,65 @@ export const refreshToken = asyncHandler(async (req, res) => {
    @route   GET /api/auth/verify-email/:token
    @access  Public
 ============================= */
-export const verifyEmail = asyncHandler(async (req, res) => {
-  const { token } = req.params;
+// export const verifyEmail = asyncHandler(async (req, res) => {
+//   const { token } = req.params;
 
-  if (!token) {
-    throw new ErrorResponse("Verification token is required", 400);
-  }
+//   if (!token) {
+//     throw new ErrorResponse("Verification token is required", 400);
+//   }
 
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-  const user = await User.findOne({ emailVerificationToken: hashedToken });
+//   const hashedToken = crypto
+//     .createHash("sha256")
+//     .update(token)
+//     .digest("hex");
 
-  if (!user) {
-    throw new ErrorResponse("Invalid verification token", 400);
-  }
+//   const user = await User.findOne({
+//     emailVerificationToken: hashedToken,
+//   });
 
-  if (user.emailVerificationExpire < Date.now()) {
-    throw new ErrorResponse("Verification token has expired", 400);
-  }
+//   if (!user) {
+//     throw new ErrorResponse("Invalid or already used verification token", 400);
+//   }
 
-  if (user.emailVerified) {
-    return res.status(200).json({
-      success: true,
-      message: "Email is already verified",
-    });
-  }
+//   if (user.emailVerificationExpire < Date.now()) {
+//     throw new ErrorResponse("Verification token has expired", 400);
+//   }
 
-  user.emailVerified = true;
-  user.emailVerificationToken = undefined;
-  user.emailVerificationExpire = undefined;
-  await user.save({ validateBeforeSave: false });
+//   if (!user.emailVerified) {
+//     user.emailVerified = true;
+//     user.emailVerificationExpire = undefined;
+//     await user.save({ validateBeforeSave: false });
+//   }
 
-  res.status(200).json({
-    success: true,
-    message: "Email verified successfully!",
-  });
-});
+//   // 🔐 Generate tokens
+//   const accessToken = user.getSignedAccessToken();
+//   const refreshToken = user.getSignedRefreshToken();
+
+//   // Optional: save refresh token
+//   user.refreshToken = refreshToken;
+//   await user.save({ validateBeforeSave: false });
+
+//   // 🍪 Send tokens (choose your strategy)
+
+//   // If using httpOnly cookies (BEST practice)
+//   res.cookie("accessToken", accessToken, {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: "strict",
+//   });
+
+//   res.cookie("refreshToken", refreshToken, {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: "strict",
+//   });
+
+//   return res.status(200).json({
+//     success: true,
+//     message: "Email verified successfully!",
+//     accessToken, // if you're storing in frontend instead of cookies
+//   });
+// });
 
 /* =============================
    @desc    Resend verification email
@@ -516,9 +500,128 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   });
 });
 
+
+/* =============================
+   @desc    Verify email and complete registration with provider linking
+   @route   GET /api/auth/verify-email/:token
+   @access  Public
+============================= */
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  if (!token) {
+    throw new ErrorResponse("Verification token is required", 400);
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    emailVerificationToken: hashedToken,
+  });
+
+  if (!user) {
+    throw new ErrorResponse("Invalid or already used verification token", 400);
+  }
+
+  if (user.emailVerificationExpire < Date.now()) {
+    throw new ErrorResponse("Verification token has expired", 400);
+  }
+
+  let workspaceId = null;
+
+  // 🔐 If first-time verification
+  if (!user.emailVerified) {
+    user.emailVerified = true;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpire = undefined;
+
+    // Handle invitation
+    if (user.pendingInvitation) {
+      const invitation = await Invitation.findById(user.pendingInvitation);
+
+      if (invitation) {
+        const workspace = await Workspace.findById(invitation.workspace);
+
+        if (workspace) {
+          await workspace.addMember(
+            user._id,
+            invitation.role || "member",
+            invitation.invitedBy,
+          );
+
+          await user.addWorkspace(
+            workspace._id,
+            invitation.role || "member",
+            false,
+          );
+
+          workspaceId = workspace._id;
+          await invitation.accept(user._id);
+        }
+      }
+
+      user.pendingInvitation = null;
+    }
+
+    // If no invitation → create personal workspace
+    if (!workspaceId) {
+      const workspace = await Workspace.create({
+        name: `${user.name}'s Workspace`,
+        owner: user._id,
+        members: [
+          {
+            user: user._id,
+            role: "owner",
+            joinedAt: new Date(),
+          },
+        ],
+      });
+
+      workspaceId = workspace._id;
+
+      await user.addWorkspace(workspaceId, "owner", true);
+    }
+
+    await user.save({ validateBeforeSave: false });
+  }
+
+  // 🔐 Always issue tokens (idempotent behavior)
+  const accessToken = user.getSignedJwtToken();
+
+  const refreshTokenObj = user.getRefreshToken({
+    type: "web",
+    ipAddress: req.ip,
+    userAgent: req.headers["user-agent"],
+  });
+
+  if (!user.refreshTokens) user.refreshTokens = [];
+  user.refreshTokens.push(refreshTokenObj);
+
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json({
+    success: true,
+    message: user.emailVerified
+      ? "Email verified successfully!"
+      : "Email already verified!",
+    accessToken,
+    refreshToken: refreshTokenObj.token,
+    workspaceId,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      emailVerified: user.emailVerified,
+      authProviders: user.authProviders,
+    },
+  });
+});
+
+
 /* =============================
    @desc    Reset password
-   @route   PUT /api/auth/reset-password/:token
+   @route   POST /api/auth/reset-password/:token
    @access  Public
 ============================= */
 export const resetPassword = asyncHandler(async (req, res) => {
@@ -579,9 +682,8 @@ export const resetPassword = asyncHandler(async (req, res) => {
 });
 
 /* =============================
-   @desc    Google OAuth callback
-   @route   GET /api/auth/google/callback
-   @access  Public
+   UPDATED: Google OAuth callback with Welcome Email
+   For NEW users only
 ============================= */
 export const googleCallback = asyncHandler(async (req, res) => {
   if (!req.user) {
@@ -593,6 +695,7 @@ export const googleCallback = asyncHandler(async (req, res) => {
   const { email, name, googleId } = req.user;
 
   let user = await User.findOne({ email }).notDeleted();
+  let isNewUser = false; // Track if this is a new user
 
   if (user) {
     const alreadyLinked = user.authProviders.some(
@@ -608,6 +711,9 @@ export const googleCallback = asyncHandler(async (req, res) => {
       user.emailVerified = true;
     }
   } else {
+    // NEW USER - OAuth signup
+    isNewUser = true;
+
     user = await User.findOneAndUpdate(
       { email },
       {
@@ -641,6 +747,19 @@ export const googleCallback = asyncHandler(async (req, res) => {
     await user.addWorkspace(workspace._id, "owner", true);
   }
 
+  // ✅ Send welcome email for NEW OAuth users
+  if (isNewUser) {
+    try {
+      await sendWelcomeEmail({
+        email: user.email,
+        name: user.name,
+      });
+      console.log(`✅ Welcome email sent to new OAuth user: ${user.email}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send welcome email:`, emailError.message);
+    }
+  }
+
   await user.trackLogin(req.ip, req.headers["user-agent"]);
 
   return sendTokenResponse(
@@ -653,9 +772,8 @@ export const googleCallback = asyncHandler(async (req, res) => {
 });
 
 /* =============================
-   @desc    LinkedIn OAuth callback
-   @route   GET /api/auth/linkedin/callback
-   @access  Public
+   UPDATED: LinkedIn OAuth callback with Welcome Email
+   For NEW users only
 ============================= */
 export const linkedinCallback = asyncHandler(async (req, res) => {
   if (!req.user) {
@@ -667,6 +785,7 @@ export const linkedinCallback = asyncHandler(async (req, res) => {
   const { email, name, linkedinId } = req.user;
 
   let user = await User.findOne({ email }).notDeleted();
+  let isNewUser = false; // Track if this is a new user
 
   if (user) {
     const alreadyLinked = user.authProviders.some(
@@ -682,6 +801,9 @@ export const linkedinCallback = asyncHandler(async (req, res) => {
       user.emailVerified = true;
     }
   } else {
+    // NEW USER - OAuth signup
+    isNewUser = true;
+
     user = await User.findOneAndUpdate(
       { email },
       {
@@ -713,6 +835,19 @@ export const linkedinCallback = asyncHandler(async (req, res) => {
     });
 
     await user.addWorkspace(workspace._id, "owner", true);
+  }
+
+  // ✅ Send welcome email for NEW OAuth users
+  if (isNewUser) {
+    try {
+      await sendWelcomeEmail({
+        email: user.email,
+        name: user.name,
+      });
+      console.log(`✅ Welcome email sent to new OAuth user: ${user.email}`);
+    } catch (emailError) {
+      console.error(`❌ Failed to send welcome email:`, emailError.message);
+    }
   }
 
   await user.trackLogin(req.ip, req.headers["user-agent"]);

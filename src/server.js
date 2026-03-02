@@ -8,10 +8,8 @@ import { validateEnv, displayEnvVars } from './config/validateEnv.js';
 import app from './app.js';
 import connectDB from './config/db.js';
 import { startReminderService, stopReminderService } from './services/reminderService.js';
-import {
-  handleUnhandledRejection,
-  handleUncaughtException,
-} from './middleware/error.js';
+import { verifyEmailConnection } from './services/emailService.js';
+import {handleUnhandledRejection, handleUncaughtException} from './middleware/error.js';
 
 /* =============================
    FIX: Increase EventEmitter max listeners
@@ -24,8 +22,10 @@ EventEmitter.defaultMaxListeners = 20; // Increased from 15 to 20
 ============================= */
 handleUncaughtException();
 
+// Verify email on startup
+
 /* =============================
-   ENVIRONMENT VALIDATION
+ENVIRONMENT VALIDATION
 ============================= */
 validateEnv();
 
@@ -38,9 +38,13 @@ const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 /* =============================
-   DATABASE CONNECTION
+DATABASE CONNECTION
 ============================= */
 try {
+
+
+  await verifyEmailConnection();
+
   await connectDB();
   console.log('✅ Database connected successfully\n');
 } catch (error) {
@@ -55,14 +59,14 @@ const server = app.listen(PORT, () => {
   console.log(`
     ╔════════════════════════════════════════════════════╗
     ║                                                    ║
-    ║     🚀 FlowEase Task Manager API                  ║
-    ║                                                    ║
+    ║     🚀 FlowEase Task Manager API                   ║
+    ║                                                     ║
     ║     Environment: ${NODE_ENV.padEnd(35)}║
     ║     Port:        ${String(PORT).padEnd(35)}║
     ║     URL:         http://localhost:${PORT.toString().padEnd(23)}║
-    ║                                                    ║
-    ║     Status:      ✅ Running                       ║
-    ║     Database:    ✅ Connected                     ║
+    ║                                                     ║
+    ║     Status:      ✅ Running                        ║
+    ║     Database:    ✅ Connected                      ║
     ║                                                    ║
     ╚════════════════════════════════════════════════════╝
   `);
