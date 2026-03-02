@@ -55,6 +55,8 @@ const workspaceSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "User"
         },
+        dailyGoal: { type: Number, default: 8 },   // hours per day
+        weeklyGoal: { type: Number, default: 40 },  // hours per week
         // ✅ ADDED: Permissions override
         permissions: {
           canCreateProjects: { type: Boolean, default: true },

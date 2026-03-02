@@ -125,6 +125,8 @@ const userSchema = new mongoose.Schema({
   suspendedAt: Date,
   suspendedReason: String,
 
+  pendingInvitation: { type: String, default: null },
+
   emailVerified: { type: Boolean, default: false },
   
   // ✅ ADDED: Phone verification

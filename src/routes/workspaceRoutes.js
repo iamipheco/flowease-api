@@ -19,6 +19,7 @@ import {
   getMembers,
   getWorkspaceStats,
   leaveWorkspace,
+  updateWorkspaceGoals
 } from '../controllers/workspaceController.js';
 import { protect } from '../middleware/auth.js';
 import { workspaceAuth } from '../middleware/workspaceAuth.js';
@@ -123,5 +124,19 @@ router.use('/:workspaceId/projects', projectRoutes);
 
 // Milestones under workspace
 router.use('/:workspaceId/milestones', milestoneRoutes);
+
+/* =============================
+   @route   PUT /api/workspaces/:id/goals
+   @desc    Update workspace daily & weekly goals
+   @access  Private (Admin/Owner)
+============================= */
+router.put(
+  '/:id/goals',
+  idValidation,
+  workspaceAuth(['owner', 'admin']),  // Only owner/admin can update goals
+  updateWorkspaceGoals
+);
+
+
 
 export default router;
