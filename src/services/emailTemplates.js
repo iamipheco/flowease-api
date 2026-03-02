@@ -1,5 +1,4 @@
-/**
- * ========================================
+ /* ========================================
  * FlowEase Email Templates - Modern Design
  * ========================================
  */
@@ -14,7 +13,7 @@ export const getBrandColors = () => ({
   dark: "#20120c",        // dark brown (header color)
   darkMuted: "#6b7280",
   light: "#ffffff",
-  background: "#ffffff",  // orange background
+  background: "#ffffff",  // white background
   border: "#e5e7eb",
   success: "#10b981",
   warning: "#f59e0b",
@@ -27,7 +26,7 @@ export const getCompanyInfo = () => ({
   fullName: process.env.APP_FULL_NAME,
   website: process.env.FRONTEND_URL,
   supportEmail: process.env.SUPPORT_EMAIL,
-  logo: process.env.APP_LOGO_URL,
+  logo: process.env.APP_LOGO_URL
 });
 
 
@@ -100,7 +99,7 @@ export const getBaseTemplate = (content, colors = getBrandColors()) => {
     margin: 0;
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    color: ${colors.light};
+    color: ${colors.dark};
   }
   table { border-collapse: collapse; width: 100%; }
   img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
@@ -234,6 +233,7 @@ export const getBaseTemplate = (content, colors = getBrandColors()) => {
 ======================================== */
 export const getVerificationEmailTemplate = ({ name, verificationUrl }) => {
   const colors = getBrandColors();
+  const company = getCompanyInfo(); // ✅ FIX: Added company
   const content = `
 <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: ${colors.dark}; line-height: 1.2;">
   Verify Your Email Address
@@ -267,6 +267,7 @@ ${getAlertBox("warning", "This verification link will expire in <strong>15 minut
 ======================================== */
 export const getPasswordResetTemplate = ({ name, resetUrl }) => {
   const colors = getBrandColors();
+  const company = getCompanyInfo(); // ✅ FIX: Added company
   const content = `
 <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: ${colors.dark}; line-height: 1.2;">
   Reset Your Password
@@ -315,44 +316,55 @@ export const getPasswordResetSuccessTemplate = ({ name }) => {
 </p>
 
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
-Your ${company.name} account password has been successfully updated. Your account is now secured with your new password.
+  Your ${company.name} account password has been successfully updated. Your account is now secured with your new password.
 </p>
+
 ${getAlertBox("success", "You can now log in to your account using your new password.", colors)}
+
 <p style="margin: 24px 0 8px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Click below to access your dashboard:
 </p>
+
 ${getButton("Go to Dashboard", company.website + "/login", "success", colors)}
+
 <p style="margin: 24px 0 0; font-size: 14px; color: ${colors.darkMuted}; line-height: 1.6;">
   If you didn't make this change or believe your account has been compromised, please contact our support team immediately.
 </p>
 `;
   return getBaseTemplate(content, colors);
 };
+
 /* ========================================
 | Welcome Email 
 ======================================== */
 export const getWelcomeEmailTemplate = ({ name }) => {
-const colors = getBrandColors();
-const company = getCompanyInfo();
-const content = `
+  const colors = getBrandColors();
+  const company = getCompanyInfo();
+  const content = `
 <div style="text-align: center; margin-bottom: 32px;">
   <div style="display: inline-block; width: 64px; height: 64px; background: linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark}); border-radius: 50%; line-height: 64px; font-size: 32px;">
     🎉
   </div>
 </div>
+
 <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: ${colors.dark}; line-height: 1.2; text-align: center;">
   Welcome to ${company.name}!
 </h1>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Hello <strong style="color: ${colors.dark};">${name}</strong>,
 </p>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Your account is now fully active! We're excited to have you on board. ${company.name} helps you manage tasks, collaborate with your team, and boost productivity.
 </p>
+
 <p style="margin: 0 0 8px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Ready to get started? Access your dashboard now:
 </p>
+
 ${getButton("Open Dashboard", company.website + "/dashboard", "primary", colors)}
+
 <div style="margin: 32px 0; padding: 20px; background-color: ${colors.background}; border-radius: 8px; border: 1px solid ${colors.border};">
   <h3 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: ${colors.dark};">
     Quick Start Tips:
@@ -364,6 +376,7 @@ ${getButton("Open Dashboard", company.website + "/dashboard", "primary", colors)
     <li>Start tracking tasks and progress</li>
   </ul>
 </div>
+
 <p style="margin: 24px 0 0; font-size: 14px; color: ${colors.darkMuted}; line-height: 1.6;">
   Need help? Our support team is here for you at 
   <a href="mailto:${company.supportEmail}" style="color: ${colors.primary}; text-decoration: none; font-weight: 500;">
@@ -373,122 +386,145 @@ ${getButton("Open Dashboard", company.website + "/dashboard", "primary", colors)
 `;
   return getBaseTemplate(content, colors);
 };
+
 /* ========================================
 | Workspace Invitation - Modern
 ======================================== */
 export const getInvitationEmailTemplate = ({ name, workspace, inviteUrl, inviterName }) => {
-const colors = getBrandColors();
-const content = `
+  const colors = getBrandColors();
+  const company = getCompanyInfo(); // ✅ FIX: Added company
+  const content = `
 <div style="text-align: center; margin-bottom: 32px;">
   <div style="display: inline-block; width: 64px; height: 64px; background: linear-gradient(135deg, ${colors.info}, #2563eb); border-radius: 50%; line-height: 64px; font-size: 32px;">
     📨
   </div>
 </div>
+
 <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: ${colors.dark}; line-height: 1.2; text-align: center;">
   You've Been Invited!
 </h1>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Hello <strong style="color: ${colors.dark};">${name}</strong>,
 </p>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   ${inviterName ? `<strong>${inviterName}</strong> has` : 'You have been'} invited you to join the workspace 
   <strong style="color: ${colors.primary};">"${workspace}"</strong> on ${company.name}.
 </p>
+
 ${getInfoCard([
-{ label: "Workspace", value: workspace },
-{ label: "Access Level", value: "Team Member" },
-{ label: "Expires", value: "24 hours" },
+  { label: "Workspace", value: workspace },
+  { label: "Access Level", value: "Team Member" },
+  { label: "Expires", value: "24 hours" },
 ], colors)}
+
 <p style="margin: 24px 0 8px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Click below to accept the invitation and start collaborating:
 </p>
+
 ${getButton("Accept Invitation", inviteUrl, "primary", colors)}
+
 ${getAlertBox("info", "This invitation link will expire in <strong>24 hours</strong>.", colors)}
+
 <p style="margin: 24px 0 0; font-size: 14px; color: ${colors.darkMuted}; line-height: 1.6;">
   If you didn't expect this invitation, you can safely ignore this email.
 </p>
 `;
   return getBaseTemplate(content, colors);
 };
+
 /* ========================================
 | Security Alert - Modern
 ======================================== */
 export const getSecurityAlertTemplate = ({
-name,
-action,
-ipAddress,
-location,
-timestamp,
+  name,
+  action,
+  ipAddress,
+  location,
+  timestamp,
 }) => {
-const colors = getBrandColors();
-const content = `
+  const colors = getBrandColors();
+  const company = getCompanyInfo(); // ✅ FIX: Added company
+  const content = `
 <div style="text-align: center; margin-bottom: 32px;">
   <div style="display: inline-block; width: 64px; height: 64px; background: linear-gradient(135deg, ${colors.error}, #dc2626); border-radius: 50%; line-height: 64px; font-size: 32px;">
     🔒
   </div>
 </div>
+
 <h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: ${colors.error}; line-height: 1.2; text-align: center;">
   Security Alert
 </h1>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Hello <strong style="color: ${colors.dark};">${name}</strong>,
 </p>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   We detected unusual activity in your ${company.name} account. Please review the details below:
 </p>
+
 ${getInfoCard([
-{ label: "Action", value: action },
-{ label: "IP Address", value: ipAddress },
-{ label: "Location", value: location || "Unknown" },
-{ label: "Timestamp", value: timestamp },
+  { label: "Action", value: action },
+  { label: "IP Address", value: ipAddress },
+  { label: "Location", value: location || "Unknown" },
+  { label: "Timestamp", value: timestamp },
 ], colors)}
+
 ${getAlertBox("error", "If this was <strong>NOT you</strong>, reset your password immediately and contact our support team.", colors)}
+
 <p style="margin: 24px 0 0; font-size: 14px; color: ${colors.darkMuted}; line-height: 1.6;">
   If this activity was authorized by you, no action is needed. We're committed to keeping your account secure.
 </p>
 `;
   return getBaseTemplate(content, colors);
 };
+
 /* ========================================
 | Generic Notification - Modern
 ======================================== */
 export const getGenericNotificationTemplate = ({
-name,
-title,
-message,
-buttonText,
-buttonUrl,
+  name,
+  title,
+  message,
+  buttonText,
+  buttonUrl,
 }) => {
-const colors = getBrandColors();
-const content = `
+  const colors = getBrandColors();
+  const content = `
 <h1 style="margin: 0 0 24px; font-size: 28px; font-weight: 700; color: ${colors.dark}; line-height: 1.2;">
   ${title}
 </h1>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   Hello <strong style="color: ${colors.dark};">${name}</strong>,
 </p>
+
 <p style="margin: 0 0 24px; font-size: 16px; color: ${colors.darkMuted}; line-height: 1.6;">
   ${message}
 </p>
+
 ${buttonText && buttonUrl ? getButton(buttonText, buttonUrl, "primary", colors) : ""}
 `;
-return getBaseTemplate(content, colors);
+  return getBaseTemplate(content, colors);
 };
+
 /* ========================================
 | Export All Templates
 ======================================== */
 export default {
-getBrandColors,
-getCompanyInfo,
-getBaseTemplate,
-getButton,
-getAlertBox,
-getInfoCard,
-getVerificationEmailTemplate,
-getPasswordResetTemplate,
-getPasswordResetSuccessTemplate,
-getWelcomeEmailTemplate,
-getInvitationEmailTemplate,
-getSecurityAlertTemplate,
-getGenericNotificationTemplate,
+  getBrandColors,
+  getCompanyInfo,
+  getBaseTemplate,
+  getButton,
+  getAlertBox,
+  getInfoCard,
+  getVerificationEmailTemplate,
+  getPasswordResetTemplate,
+  getPasswordResetSuccessTemplate,
+  getWelcomeEmailTemplate,
+  getInvitationEmailTemplate,
+  getSecurityAlertTemplate,
+  getGenericNotificationTemplate,
 };
