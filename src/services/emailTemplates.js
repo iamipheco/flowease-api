@@ -342,12 +342,12 @@ export const getWelcomeEmailTemplate = ({ name }) => {
   const company = getCompanyInfo();
   const content = `
 <div style="text-align: center; margin-bottom: 32px;">
-  <div style="display: inline-block; width: 64px; height: 64px; background: linear-gradient(135deg, ${colors.primary}, ${colors.primaryDark}); border-radius: 50%; line-height: 64px; font-size: 32px;">
+  <div style="display: inline-block; width: 64px; height: 64px; line-height: 64px; font-size: 32px;">
     🎉
   </div>
 </div>
 
-<h1 style="margin: 0 0 16px; font-size: 28px; font-weight: 700; color: ${colors.dark}; line-height: 1.2; text-align: center;">
+<h1 style="margin: 0 0 16px; font-size: 32px; font-weight: 700; color: ${colors.dark}; line-height: 1.2; text-align: center;">
   Welcome to ${company.name}!
 </h1>
 
