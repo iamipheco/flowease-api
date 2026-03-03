@@ -502,7 +502,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
 
 /* =============================
-   @desc    Verify email and complete registration with provider linking
+   @desc    Verify email and complete registration
    @route   GET /api/auth/verify-email/:token
    @access  Public
 ============================= */
@@ -514,29 +514,35 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     throw new ErrorResponse("Verification token is required", 400);
   }
 
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
 
   const user = await User.findOne({
     emailVerificationToken: hashedToken,
+    emailVerificationExpire: { $gt: Date.now() }, // ✅ check expiration
   });
 
   if (!user) {
-    throw new ErrorResponse("Invalid or already used verification token", 400);
-  }
-
-  if (user.emailVerificationExpire < Date.now()) {
-    throw new ErrorResponse("Verification token has expired", 400);
+    throw new ErrorResponse(
+      "Invalid or expired verification token",
+      400
+    );
   }
 
   let workspaceId = null;
+  let isFirstTimeVerification = false;
 
-  // 🔐 If first-time verification
+  // 🔐 First-time verification
   if (!user.emailVerified) {
+    isFirstTimeVerification = true;
+
     user.emailVerified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationExpire = undefined;
 
-    // Handle invitation
+    // 🔹 Handle invitation
     if (user.pendingInvitation) {
       const invitation = await Invitation.findById(user.pendingInvitation);
 
@@ -547,13 +553,13 @@ export const verifyEmail = asyncHandler(async (req, res) => {
           await workspace.addMember(
             user._id,
             invitation.role || "member",
-            invitation.invitedBy,
+            invitation.invitedBy
           );
 
           await user.addWorkspace(
             workspace._id,
             invitation.role || "member",
-            false,
+            false
           );
 
           workspaceId = workspace._id;
@@ -564,7 +570,7 @@ export const verifyEmail = asyncHandler(async (req, res) => {
       user.pendingInvitation = null;
     }
 
-    // If no invitation → create personal workspace
+    // 🔹 Create personal workspace if none
     if (!workspaceId) {
       const workspace = await Workspace.create({
         name: `${user.name}'s Workspace`,
@@ -584,9 +590,24 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     }
 
     await user.save({ validateBeforeSave: false });
+
+    // ✅ Send welcome email SAFELY (non-blocking)
+    sendWelcomeEmail({
+      email: user.email,
+      name: user.name,
+    })
+      .then(() =>
+        console.log(`✅ Welcome email sent to ${user.email}`)
+      )
+      .catch((err) =>
+        console.error(
+          `❌ Welcome email failed for ${user.email}:`,
+          err.message
+        )
+      );
   }
 
-  // 🔐 Always issue tokens (idempotent behavior)
+  // 🔐 Always issue tokens
   const accessToken = user.getSignedJwtToken();
 
   const refreshTokenObj = user.getRefreshToken({
@@ -600,22 +621,9 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 
   await user.save({ validateBeforeSave: false });
 
-  // ✅ Send welcome email for NEW users
-  if (isNewUser) {
-    try {
-      await sendWelcomeEmail({
-        email: user.email,
-        name: user.name,
-      });
-      console.log(`✅ Welcome email sent to new user: ${user.email}`);
-    } catch (emailError) {
-      console.error(`❌ Failed to send welcome email:`, emailError.message);
-    }
-  }
-
   return res.status(200).json({
     success: true,
-    message: user.emailVerified
+    message: isFirstTimeVerification
       ? "Email verified successfully!"
       : "Email already verified!",
     accessToken,
@@ -701,18 +709,35 @@ export const resetPassword = asyncHandler(async (req, res) => {
 export const googleCallback = asyncHandler(async (req, res) => {
   if (!req.user) {
     return res.redirect(
-      `${process.env.FRONTEND_URL}/login?error=authentication_failed`,
+      `${process.env.FRONTEND_URL}/login?error=authentication_failed`
     );
   }
 
   const { email, name, googleId } = req.user;
 
   let user = await User.findOne({ email }).notDeleted();
-  let isNewUser = false; // Track if this is a new user
+  let isNewUser = false;
 
-  if (user) {
+  if (!user) {
+    // 🔥 Truly NEW user
+    isNewUser = true;
+
+    user = await User.create({
+      name,
+      email,
+      emailVerified: true,
+      authProviders: [
+        {
+          provider: "google",
+          providerId: googleId,
+          connectedAt: new Date(),
+        },
+      ],
+    });
+  } else {
+    // Existing user → link Google if not linked
     const alreadyLinked = user.authProviders.some(
-      (p) => p.provider === "google",
+      (p) => p.provider === "google"
     );
 
     if (!alreadyLinked) {
@@ -721,33 +746,13 @@ export const googleCallback = asyncHandler(async (req, res) => {
         providerId: googleId,
         connectedAt: new Date(),
       });
-      user.emailVerified = true;
     }
-  } else {
-    // NEW USER - OAuth signup
-    isNewUser = true;
 
-    user = await User.findOneAndUpdate(
-      { email },
-      {
-        $setOnInsert: {
-          name,
-          email,
-          emailVerified: true,
-          authProviders: [
-            {
-              provider: "google",
-              providerId: googleId,
-              connectedAt: new Date(),
-            },
-          ],
-        },
-      },
-      { upsert: true, new: true },
-    );
+    user.emailVerified = true;
+    await user.save();
   }
 
-  // Create personal workspace if doesn't exist
+  // Create workspace if none exists
   const existingWorkspace = await Workspace.findOne({ owner: user._id });
 
   if (!existingWorkspace) {
@@ -760,17 +765,21 @@ export const googleCallback = asyncHandler(async (req, res) => {
     await user.addWorkspace(workspace._id, "owner", true);
   }
 
-  // ✅ Send welcome email for NEW OAuth users
+  // ✅ Send welcome email ONLY for truly new users
   if (isNewUser) {
-    try {
-      await sendWelcomeEmail({
-        email: user.email,
-        name: user.name,
-      });
-      console.log(`✅ Welcome email sent to new OAuth user: ${user.email}`);
-    } catch (emailError) {
-      console.error(`❌ Failed to send welcome email:`, emailError.message);
-    }
+    sendWelcomeEmail({
+      email: user.email,
+      name: user.name,
+    })
+      .then(() =>
+        console.log(`✅ Welcome email sent to new OAuth user: ${user.email}`)
+      )
+      .catch((err) =>
+        console.error(
+          `❌ Welcome email failed for OAuth user:`,
+          err.message
+        )
+      );
   }
 
   await user.trackLogin(req.ip, req.headers["user-agent"]);
@@ -780,7 +789,7 @@ export const googleCallback = asyncHandler(async (req, res) => {
     200,
     res,
     "Login Successful via Google",
-    `${process.env.FRONTEND_URL}/auth/callback`,
+    `${process.env.FRONTEND_URL}/auth/callback`
   );
 });
 
@@ -791,18 +800,35 @@ export const googleCallback = asyncHandler(async (req, res) => {
 export const linkedinCallback = asyncHandler(async (req, res) => {
   if (!req.user) {
     return res.redirect(
-      `${process.env.FRONTEND_URL}/login?error=linkedin_auth_failed`,
+      `${process.env.FRONTEND_URL}/login?error=linkedin_auth_failed`
     );
   }
 
   const { email, name, linkedinId } = req.user;
 
   let user = await User.findOne({ email }).notDeleted();
-  let isNewUser = false; // Track if this is a new user
+  let isNewUser = false;
 
-  if (user) {
+  // 🔥 Truly new user
+  if (!user) {
+    isNewUser = true;
+
+    user = await User.create({
+      name,
+      email,
+      emailVerified: true,
+      authProviders: [
+        {
+          provider: "linkedin",
+          providerId: linkedinId,
+          connectedAt: new Date(),
+        },
+      ],
+    });
+  } else {
+    // Existing user → link LinkedIn if not already linked
     const alreadyLinked = user.authProviders.some(
-      (p) => p.provider === "linkedin",
+      (p) => p.provider === "linkedin"
     );
 
     if (!alreadyLinked) {
@@ -811,33 +837,14 @@ export const linkedinCallback = asyncHandler(async (req, res) => {
         providerId: linkedinId,
         connectedAt: new Date(),
       });
-      user.emailVerified = true;
     }
-  } else {
-    // NEW USER - OAuth signup
-    isNewUser = true;
 
-    user = await User.findOneAndUpdate(
-      { email },
-      {
-        $setOnInsert: {
-          name,
-          email,
-          emailVerified: true,
-          authProviders: [
-            {
-              provider: "linkedin",
-              providerId: linkedinId,
-              connectedAt: new Date(),
-            },
-          ],
-        },
-      },
-      { upsert: true, new: true },
-    );
+    user.emailVerified = true;
+
+    await user.save(); // ✅ IMPORTANT
   }
 
-  // Create personal workspace if doesn't exist
+  // ✅ Ensure workspace exists
   const existingWorkspace = await Workspace.findOne({ owner: user._id });
 
   if (!existingWorkspace) {
@@ -850,7 +857,6 @@ export const linkedinCallback = asyncHandler(async (req, res) => {
     await user.addWorkspace(workspace._id, "owner", true);
   }
 
-
   await user.trackLogin(req.ip, req.headers["user-agent"]);
 
   return sendTokenResponse(
@@ -858,9 +864,10 @@ export const linkedinCallback = asyncHandler(async (req, res) => {
     200,
     res,
     "Login Successful via LinkedIn",
-    `${process.env.FRONTEND_URL}/auth/callback`,
+    `${process.env.FRONTEND_URL}/auth/callback`
   );
 });
+
 
 /* =============================
    @desc    Get auth providers
